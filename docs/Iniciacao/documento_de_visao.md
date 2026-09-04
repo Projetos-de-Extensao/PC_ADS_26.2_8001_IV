@@ -151,11 +151,11 @@ Para implementar a visão proposta, a arquitetura AWS foi desenhada com os segui
 
 ---
 
-## 8. Aprovação e Histórico de Versões
+## 8. Versionamento
 
 | Versão | Data | Descrição da Alteração | Autor(es) |
 |---|---|---|---|
-| 0.1 | [dd/mm/aaaa] | Criação da estrutura inicial do documento, com base no padrão RUP/UP e no modelo de referência da disciplina. | [Nome] |
+| 0.1 | [04/09/2026] | Criação da estrutura inicial do documento, com base no padrão RUP/UP e no modelo de referência da disciplina. | [Ricardo França] |
 | 0.2 | [dd/mm/aaaa] | Inclusão do posicionamento de mercado e da descrição dos stakeholders. | [Nome] |
 | 0.3 | [dd/mm/aaaa] | Detalhamento da arquitetura AWS e dos atributos de qualidade (SLAs/SLOs). | [Nome] |
 | 1.0 | [dd/mm/aaaa] | Versão final revisada para entrega acadêmica. | [Nome] |
