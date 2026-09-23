@@ -1,12 +1,12 @@
 # Modelo de Análise (Pacotes/Subsistemas)
 
-## SHOPSPHERE E-COMMERCE — ARQUITETURA DE SEGURANÇA EM NUVEM AWS
+## E-COMMERCE — ARQUITETURA DE SEGURANÇA EM NUVEM AWS
 
 ### Informação do Documento
 
 | Campo | Valor |
 |---|---|
-| Projeto | Plataforma de E-commerce |
+| Projeto | Plataforma de E-commerce e Marketplace |
 | Documento | Modelo de Análise (Pacotes/Subsistemas) - Segurança |
 | Versão | 1.0 |
 | Data | 23/09/2026 |
@@ -21,7 +21,7 @@
 
 ### 1.1. Propósito
 
-Este documento apresenta o Modelo de Análise (Pacotes/Subsistemas) para a arquitetura de segurança da plataforma ShopSphere na AWS. O modelo organiza os componentes de segurança em pacotes coesos, facilitando a compreensão, manutenção e evolução da arquitetura, além de permitir a rastreabilidade entre requisitos de segurança e elementos técnicos.
+Este documento apresenta o Modelo de Análise (Pacotes/Subsistemas) para a arquitetura de segurança da plataforma de e-commerce na AWS. O modelo organiza os componentes de segurança em pacotes coesos, facilitando a compreensão, manutenção e evolução da arquitetura, além de permitir a rastreabilidade entre requisitos de segurança e elementos técnicos.
 
 O modelo é derivado diretamente dos seguintes artefatos:
 - Documento de Visão (Semana 1) — Seção "Segurança e Privacidade"
@@ -60,9 +60,9 @@ O modelo abrange os subsistemas de segurança necessários para proteger:
 
 ### 1.4. Referências
 
-- Documento de Visão — ShopSphere (v1.0)
-- Documento de Requisitos Suplementares — ShopSphere (v1.0)
-- Modelo de Casos de Uso Arquiteturais — ShopSphere (v1.0)
+- Documento de Visão — E-commerce (v1.0)
+- Documento de Requisitos Suplementares — E-commerce (v1.0)
+- Modelo de Casos de Uso Arquiteturais — E-commerce (v1.0)
 - AWS Well-Architected Framework — Security Pillar
 - AWS IAM Best Practices
 - Lei Geral de Proteção de Dados (LGPD)
@@ -76,7 +76,7 @@ O modelo abrange os subsistemas de segurança necessários para proteger:
 
 ```mermaid
 graph TB
-    subgraph SS["ShopSphere E-commerce — Segurança"]
+    subgraph SS["E-commerce — Segurança"]
         IAM["Identity & Access<br/><i>Identidade e Acesso</i>"]
         NET["Network Security<br/><i>Segurança de Rede</i>"]
         DATA["Data Protection<br/><i>Proteção de Dados</i>"]
@@ -133,7 +133,7 @@ graph TB
 
 #### 3.1.1. Responsabilidade
 
-Gerenciar identidades (humanos e serviços), autenticação, autorização e permissões de acesso a todos os recursos do ShopSphere na AWS.
+Gerenciar identidades (humanos e serviços), autenticação, autorização e permissões de acesso a todos os recursos da plataforma de e-commerce na AWS.
 
 #### 3.1.2. Elementos do Pacote
 
@@ -189,7 +189,7 @@ classDiagram
     IAMUser "1" --> "0..1" MFADevice : usa
 ```
 
-#### 3.1.4. Roles e Permissões (ShopSphere)
+#### 3.1.4. Roles e Permissões (E-commerce)
 
 | Role | Tipo | Serviços Acessados | Permissões | Justificativa |
 |---|---|---|---|---|
@@ -214,7 +214,7 @@ classDiagram
         "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": "arn:aws:s3:::shopsphere-product-images/*"
+      "Resource": "arn:aws:s3:::ecommerce-product-images/*"
     },
     {
       "Sid": "SecretsAccess",
@@ -306,7 +306,7 @@ classDiagram
     SecurityGroup "1" --> "0..1" FlowLog : monitora
 ```
 
-#### 3.2.4. Matriz de Security Groups (ShopSphere)
+#### 3.2.4. Matriz de Security Groups (E-commerce)
 
 | Security Group | Regra de Entrada | Origem | Regra de Saída | Destino | Justificativa |
 |---|---|---|---|---|---|
@@ -316,7 +316,7 @@ classDiagram
 | SG-RDS | 5432 | SG-EC2-API | - | - | Banco acessível apenas pela API. |
 | SG-Lambda-Checkout | - | - | 443 | VPC Endpoints / Payment Gateway | Checkout acessa gateway de pagamento via endpoint. |
 
-#### 3.2.5. Matriz de NACLs (ShopSphere)
+#### 3.2.5. Matriz de NACLs (E-commerce)
 
 | NACL | Regra | Protocolo | Porta | Origem/Destino | Ação |
 |---|---|---|---|---|---|
@@ -327,7 +327,7 @@ classDiagram
 | | 200 | TCP | 8000 | 10.0.1.0/24 | Allow |
 | | * | All | All | 0.0.0.0/0 | Deny |
 
-#### 3.2.6. WAF Rules (ShopSphere)
+#### 3.2.6. WAF Rules (E-commerce)
 
 | Regra | Tipo | Ação | Justificativa |
 |---|---|---|---|
@@ -402,7 +402,7 @@ classDiagram
     BackupPolicy "1" --> "*" EncryptionConfig : protege
 ```
 
-#### 3.3.4. Matriz de Criptografia (ShopSphere)
+#### 3.3.4. Matriz de Criptografia (E-commerce)
 
 | Serviço | Criptografia em Repouso | Criptografia em Trânsito | Chave | Justificativa |
 |---|---|---|---|---|
@@ -413,9 +413,9 @@ classDiagram
 | ALB | - | TLS 1.3 | ACM Certificate | Loja e API pública. |
 | EBS (EC2) | AES-256 | - | KMS CMK | Disco da API. |
 
-> **Nota PCI-DSS:** o ShopSphere **não armazena** número completo de cartão de crédito (PAN) em seus próprios bancos — o processamento de pagamento é tokenizado via gateway externo certificado PCI-DSS Nível 1, reduzindo o escopo de conformidade da plataforma.
+> **Nota PCI-DSS:** o e-commerce **não armazena** número completo de cartão de crédito (PAN) em seus próprios bancos — o processamento de pagamento é tokenizado via gateway externo certificado PCI-DSS Nível 1, reduzindo o escopo de conformidade da plataforma.
 
-#### 3.3.5. Políticas de Backup (ShopSphere)
+#### 3.3.5. Políticas de Backup (E-commerce)
 
 | Serviço | Frequência | Retenção | RPO | RTO |
 |---|---|---|---|---|
@@ -484,7 +484,7 @@ classDiagram
     Secret "1" --> "*" AccessPolicy : protegido por
 ```
 
-#### 3.4.4. Segredos Gerenciados (ShopSphere)
+#### 3.4.4. Segredos Gerenciados (E-commerce)
 
 | Segredo | Serviço | Rotação | Acesso | Justificativa |
 |---|---|---|---|---|
@@ -557,7 +557,7 @@ classDiagram
     ConfigRule "1" --> "*" ComplianceReport : gera
 ```
 
-#### 3.5.4. Config Rules (ShopSphere)
+#### 3.5.4. Config Rules (E-commerce)
 
 | Regra | Descrição | Serviço Alvo | Conformidade |
 |---|---|---|---|
@@ -639,7 +639,7 @@ classDiagram
     Dashboard "1" --> "*" Metric : exibe
 ```
 
-#### 3.6.4. Alarmes Configurados (ShopSphere)
+#### 3.6.4. Alarmes Configurados (E-commerce)
 
 | Alarme | Métrica | Threshold | Ação | Justificativa |
 |---|---|---|---|---|
@@ -718,4 +718,4 @@ graph TB
 
 ---
 
-*Documento gerado com base no modelo de referência SwiftTrack IoT, adaptado para o domínio de e-commerce (ShopSphere).*
+*Documento gerado com base no modelo de referência SwiftTrack IoT, adaptado para o domínio de e-commerce.*
