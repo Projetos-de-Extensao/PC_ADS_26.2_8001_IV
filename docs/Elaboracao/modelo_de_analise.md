@@ -74,31 +74,30 @@ O modelo abrange os subsistemas de segurança necessários para proteger:
 
 ### 2.1. Diagrama de Pacotes
 
-```mermaid
-graph TB
-    subgraph SS["E-commerce — Segurança"]
-        IAM["Identity & Access<br/><i>Identidade e Acesso</i>"]
-        NET["Network Security<br/><i>Segurança de Rede</i>"]
-        DATA["Data Protection<br/><i>Proteção de Dados</i>"]
-        SEC["Secrets Management<br/><i>Gestão de Segredos</i>"]
-        AUD["Audit & Compliance<br/><i>Auditoria e Conformidade</i>"]
-        MON["Monitoring & Detection<br/><i>Monitoramento e Detecção</i>"]
-    end
+```plantuml
+@startuml
+title Diagrama de Pacotes - E-commerce (Segurança)
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultTextAlignment center
 
-    NET -.«use».-> IAM
-    IAM -.«use».-> DATA
-    DATA -.«use».-> SEC
-    AUD -.«use».-> IAM
-    MON -.«use».-> AUD
-    MON -.«use».-> NET
-    MON -.«use».-> DATA
+package "E-commerce — Segurança" as SS {
+  package "Identity & Access\n<i>Identidade e Acesso</i>" as IAM #E3F2FD
+  package "Network Security\n<i>Segurança de Rede</i>" as NET #FFF3E0
+  package "Data Protection\n<i>Proteção de Dados</i>" as DATA #E8F5E9
+  package "Secrets Management\n<i>Gestão de Segredos</i>" as SEC #FCE4EC
+  package "Audit & Compliance\n<i>Auditoria e Conformidade</i>" as AUD #EDE7F6
+  package "Monitoring & Detection\n<i>Monitoramento e Detecção</i>" as MON #FFF8E1
+}
 
-    style IAM fill:#E3F2FD,stroke:#333
-    style NET fill:#FFF3E0,stroke:#333
-    style DATA fill:#E8F5E9,stroke:#333
-    style SEC fill:#FCE4EC,stroke:#333
-    style AUD fill:#EDE7F6,stroke:#333
-    style MON fill:#FFF8E1,stroke:#333
+NET ..> IAM : <<use>>
+IAM ..> DATA : <<use>>
+DATA ..> SEC : <<use>>
+AUD ..> IAM : <<use>>
+MON ..> AUD : <<use>>
+MON ..> NET : <<use>>
+MON ..> DATA : <<use>>
+@enduml
 ```
 
 ### 2.2. Descrição dos Pacotes
@@ -148,45 +147,50 @@ Gerenciar identidades (humanos e serviços), autenticação, autorização e per
 
 #### 3.1.3. Diagrama de Classes de Análise
 
-```mermaid
-classDiagram
-    class IAMUser {
-        -username: String
-        -email: String
-        -mfaEnabled: Boolean
-        -groups: List~Group~
-        +authenticate(): Token
-        +enableMFA(): void
-    }
-    class IAMGroup {
-        -name: String
-        -policies: List~Policy~
-        +addUser(user: IAMUser): void
-        +attachPolicy(policy: Policy): void
-    }
-    class IAMRole {
-        -name: String
-        -trustPolicy: JSON
-        -permissions: List~Policy~
-        +assumeRole(service: Service): Credentials
-    }
-    class IAMPolicy {
-        -name: String
-        -document: JSON
-        -effect: AllowDeny
-        +validate(): Boolean
-    }
-    class MFADevice {
-        -type: VirtualHardware
-        -serialNumber: String
-        +generateCode(): String
-        +validateCode(code: String): Boolean
-    }
+```plantuml
+@startuml
+title Classes de Análise - Identity & Access
+skinparam classAttributeIconSize 0
+hide circle
 
-    IAMUser "1" --> "*" IAMGroup : pertence
-    IAMGroup "1" --> "*" IAMPolicy : possui
-    IAMRole "1" --> "*" IAMPolicy : possui
-    IAMUser "1" --> "0..1" MFADevice : usa
+class IAMUser {
+  -username : String
+  -email : String
+  -mfaEnabled : Boolean
+  -groups : List<Group>
+  +authenticate() : Token
+  +enableMFA() : void
+}
+class IAMGroup {
+  -name : String
+  -policies : List<Policy>
+  +addUser(user : IAMUser) : void
+  +attachPolicy(policy : Policy) : void
+}
+class IAMRole {
+  -name : String
+  -trustPolicy : JSON
+  -permissions : List<Policy>
+  +assumeRole(service : Service) : Credentials
+}
+class IAMPolicy {
+  -name : String
+  -document : JSON
+  -effect : AllowDeny
+  +validate() : Boolean
+}
+class MFADevice {
+  -type : VirtualHardware
+  -serialNumber : String
+  +generateCode() : String
+  +validateCode(code : String) : Boolean
+}
+
+IAMUser "1" --> "*" IAMGroup : pertence
+IAMGroup "1" --> "*" IAMPolicy : possui
+IAMRole "1" --> "*" IAMPolicy : possui
+IAMUser "1" --> "0..1" MFADevice : usa
+@enduml
 ```
 
 #### 3.1.4. Roles e Permissões (E-commerce)
@@ -267,43 +271,48 @@ Controlar e filtrar o tráfego de rede entre as camadas da aplicação (loja vir
 
 #### 3.2.3. Diagrama de Classes de Análise
 
-```mermaid
-classDiagram
-    class SecurityGroup {
-        -name: String
-        -vpcId: String
-        -inboundRules: List~Rule~
-        -outboundRules: List~Rule~
-        +addInboundRule(rule: Rule): void
-        +addOutboundRule(rule: Rule): void
-    }
-    class NACL {
-        -name: String
-        -subnetId: String
-        -rules: List~NACLRule~
-        +addRule(rule: NACLRule): void
-    }
-    class Rule {
-        -protocol: TCPUDPICMP
-        -portRange: String
-        -source: String
-        -action: AllowDeny
-    }
-    class WAFRule {
-        -name: String
-        -type: SQLiXSSRateLimitBot
-        -action: BlockAllowCount
-    }
-    class FlowLog {
-        -logGroup: String
-        -trafficType: ALLACCEPTREJECT
-        +enable(): void
-    }
-    class NACLRule
+```plantuml
+@startuml
+title Classes de Análise - Network Security
+skinparam classAttributeIconSize 0
+hide circle
 
-    SecurityGroup "1" --> "*" Rule : contém
-    NACL "1" --> "*" NACLRule : contém
-    SecurityGroup "1" --> "0..1" FlowLog : monitora
+class SecurityGroup {
+  -name : String
+  -vpcId : String
+  -inboundRules : List<Rule>
+  -outboundRules : List<Rule>
+  +addInboundRule(rule : Rule) : void
+  +addOutboundRule(rule : Rule) : void
+}
+class NACL {
+  -name : String
+  -subnetId : String
+  -rules : List<NACLRule>
+  +addRule(rule : NACLRule) : void
+}
+class Rule {
+  -protocol : TCPUDPICMP
+  -portRange : String
+  -source : String
+  -action : AllowDeny
+}
+class WAFRule {
+  -name : String
+  -type : SQLiXSSRateLimitBot
+  -action : BlockAllowCount
+}
+class FlowLog {
+  -logGroup : String
+  -trafficType : ALLACCEPTREJECT
+  +enable() : void
+}
+class NACLRule
+
+SecurityGroup "1" --> "*" Rule : contém
+NACL "1" --> "*" NACLRule : contém
+SecurityGroup "1" --> "0..1" FlowLog : monitora
+@enduml
 ```
 
 #### 3.2.4. Matriz de Security Groups (E-commerce)
@@ -367,39 +376,44 @@ Garantir a criptografia de dados em repouso e em trânsito, além de políticas 
 
 #### 3.3.3. Diagrama de Classes de Análise
 
-```mermaid
-classDiagram
-    class KMSKey {
-        -keyId: String
-        -alias: String
-        -rotationEnabled: Boolean
-        -keyPolicy: JSON
-        +encrypt(data: Bytes): Bytes
-        +decrypt(data: Bytes): Bytes
-        +rotate(): void
-    }
-    class EncryptionConfig {
-        -service: String
-        -type: SSEKMSSSES3
-        -kmsKey: KMSKey
-        +apply(): void
-    }
-    class TLSCertificate {
-        -domain: String
-        -issuer: ACM
-        -expirationDate: Date
-        +validate(): Boolean
-        +renew(): void
-    }
-    class BackupPolicy {
-        -frequency: DailyWeekly
-        -retentionDays: Integer
-        -targetServices: List~String~
-        +execute(): void
-    }
+```plantuml
+@startuml
+title Classes de Análise - Data Protection
+skinparam classAttributeIconSize 0
+hide circle
 
-    EncryptionConfig "1" --> "1" KMSKey : usa
-    BackupPolicy "1" --> "*" EncryptionConfig : protege
+class KMSKey {
+  -keyId : String
+  -alias : String
+  -rotationEnabled : Boolean
+  -keyPolicy : JSON
+  +encrypt(data : Bytes) : Bytes
+  +decrypt(data : Bytes) : Bytes
+  +rotate() : void
+}
+class EncryptionConfig {
+  -service : String
+  -type : SSEKMSSSES3
+  -kmsKey : KMSKey
+  +apply() : void
+}
+class TLSCertificate {
+  -domain : String
+  -issuer : ACM
+  -expirationDate : Date
+  +validate() : Boolean
+  +renew() : void
+}
+class BackupPolicy {
+  -frequency : DailyWeekly
+  -retentionDays : Integer
+  -targetServices : List<String>
+  +execute() : void
+}
+
+EncryptionConfig "1" --> "1" KMSKey : usa
+BackupPolicy "1" --> "*" EncryptionConfig : protege
+@enduml
 ```
 
 #### 3.3.4. Matriz de Criptografia (E-commerce)
@@ -452,36 +466,41 @@ Proteger credenciais, chaves de API de gateways de pagamento, tokens e outros se
 
 #### 3.4.3. Diagrama de Classes de Análise
 
-```mermaid
-classDiagram
-    class Secret {
-        -name: String
-        -rotationEnabled: Boolean
-        -rotationLambda: String
-        -value: String
-        +getValue(): String
-        +rotate(): void
-    }
-    class Parameter {
-        -name: String
-        -value: String
-        -type: StringListSecureString
-        +getValue(): String
-    }
-    class RotationPolicy {
-        -frequency: Days
-        -lambdaArn: String
-        +execute(): void
-    }
-    class AccessPolicy {
-        -secretArn: String
-        -principals: List~String~
-        -actions: List~String~
-        +validate(): Boolean
-    }
+```plantuml
+@startuml
+title Classes de Análise - Secrets Management
+skinparam classAttributeIconSize 0
+hide circle
 
-    Secret "1" --> "0..1" RotationPolicy : usa
-    Secret "1" --> "*" AccessPolicy : protegido por
+class Secret {
+  -name : String
+  -rotationEnabled : Boolean
+  -rotationLambda : String
+  -value : String
+  +getValue() : String
+  +rotate() : void
+}
+class Parameter {
+  -name : String
+  -value : String
+  -type : StringListSecureString
+  +getValue() : String
+}
+class RotationPolicy {
+  -frequency : Days
+  -lambdaArn : String
+  +execute() : void
+}
+class AccessPolicy {
+  -secretArn : String
+  -principals : List<String>
+  -actions : List<String>
+  +validate() : Boolean
+}
+
+Secret "1" --> "0..1" RotationPolicy : usa
+Secret "1" --> "*" AccessPolicy : protegido por
+@enduml
 ```
 
 #### 3.4.4. Segredos Gerenciados (E-commerce)
@@ -523,38 +542,43 @@ Rastrear todas as ações realizadas na conta AWS, garantir conformidade com reg
 
 #### 3.5.3. Diagrama de Classes de Análise
 
-```mermaid
-classDiagram
-    class Trail {
-        -name: String
-        -s3Bucket: String
-        -regions: List~String~
-        -logFileValidation: Boolean
-        +enable(): void
-        +getEvents(filter: Filter): List~Event~
-    }
-    class ConfigRule {
-        -name: String
-        -source: AWSManaged
-        -compliance: CompliantNonCompliant
-        +evaluate(): Compliance
-    }
-    class ComplianceReport {
-        -framework: LGPDPCIDSS
-        -period: DateRange
-        -findings: List~Finding~
-        +generate(): Report
-    }
-    class AuditEvent {
-        -eventId: String
-        -eventTime: DateTime
-        -userIdentity: String
-        -eventName: String
-        -resourceArn: String
-    }
+```plantuml
+@startuml
+title Classes de Análise - Audit & Compliance
+skinparam classAttributeIconSize 0
+hide circle
 
-    Trail "1" --> "*" AuditEvent : registra
-    ConfigRule "1" --> "*" ComplianceReport : gera
+class Trail {
+  -name : String
+  -s3Bucket : String
+  -regions : List<String>
+  -logFileValidation : Boolean
+  +enable() : void
+  +getEvents(filter : Filter) : List<Event>
+}
+class ConfigRule {
+  -name : String
+  -source : AWSManaged
+  -compliance : CompliantNonCompliant
+  +evaluate() : Compliance
+}
+class ComplianceReport {
+  -framework : LGPDPCIDSS
+  -period : DateRange
+  -findings : List<Finding>
+  +generate() : Report
+}
+class AuditEvent {
+  -eventId : String
+  -eventTime : DateTime
+  -userIdentity : String
+  -eventName : String
+  -resourceArn : String
+}
+
+Trail "1" --> "*" AuditEvent : registra
+ConfigRule "1" --> "*" ComplianceReport : gera
+@enduml
 ```
 
 #### 3.5.4. Config Rules (E-commerce)
@@ -598,45 +622,50 @@ Monitorar a saúde dos recursos, detectar fraude, anomalias e ameaças (especial
 
 #### 3.6.3. Diagrama de Classes de Análise
 
-```mermaid
-classDiagram
-    class Metric {
-        -namespace: String
-        -name: String
-        -value: Double
-        -unit: String
-        -timestamp: DateTime
-        +publish(): void
-    }
-    class Alarm {
-        -name: String
-        -metric: Metric
-        -threshold: Double
-        -comparison: GreaterThanLessThan
-        -actions: List~Action~
-        +evaluate(): State
-    }
-    class Dashboard {
-        -name: String
-        -widgets: List~Widget~
-        +addWidget(widget: Widget): void
-    }
-    class Threat {
-        -type: String
-        -severity: LowMediumHigh
-        -resource: String
-        -detectedAt: DateTime
-    }
-    class Notification {
-        -topic: String
-        -recipients: List~String~
-        -channel: EmailSMSSlack
-        +send(): void
-    }
+```plantuml
+@startuml
+title Classes de Análise - Monitoring & Detection
+skinparam classAttributeIconSize 0
+hide circle
 
-    Alarm "1" --> "*" Metric : monitora
-    Alarm "1" --> "*" Notification : dispara
-    Dashboard "1" --> "*" Metric : exibe
+class Metric {
+  -namespace : String
+  -name : String
+  -value : Double
+  -unit : String
+  -timestamp : DateTime
+  +publish() : void
+}
+class Alarm {
+  -name : String
+  -metric : Metric
+  -threshold : Double
+  -comparison : GreaterThanLessThan
+  -actions : List<Action>
+  +evaluate() : State
+}
+class Dashboard {
+  -name : String
+  -widgets : List<Widget>
+  +addWidget(widget : Widget) : void
+}
+class Threat {
+  -type : String
+  -severity : LowMediumHigh
+  -resource : String
+  -detectedAt : DateTime
+}
+class Notification {
+  -topic : String
+  -recipients : List<String>
+  -channel : EmailSMSSlack
+  +send() : void
+}
+
+Alarm "1" --> "*" Metric : monitora
+Alarm "1" --> "*" Notification : dispara
+Dashboard "1" --> "*" Metric : exibe
+@enduml
 ```
 
 #### 3.6.4. Alarmes Configurados (E-commerce)
@@ -664,29 +693,28 @@ classDiagram
 
 ## 4. DIAGRAMA DE DEPENDÊNCIAS ENTRE PACOTES
 
-```mermaid
-graph TB
-    IAM["IAM<br/>Identity & Access"]
-    NET["NetSec<br/>Network Security"]
-    DATA["DataProt<br/>Data Protection"]
-    SEC["Secrets<br/>Secrets Management"]
-    AUD["Audit<br/>Audit & Compliance"]
-    MON["Monitor<br/>Monitoring & Detection"]
+```plantuml
+@startuml
+title Dependências entre Pacotes de Segurança
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultTextAlignment center
 
-    IAM -->|"IAM define quem acessa chaves KMS"| DATA
-    NET -->|"Security Groups usam roles IAM"| IAM
-    DATA -->|"Chaves gerenciadas no Secrets Manager"| SEC
-    AUD -->|"CloudTrail registra ações IAM"| IAM
-    MON -->|"CloudWatch consome logs CloudTrail"| AUD
-    MON -->|"GuardDuty analisa VPC Flow Logs"| NET
-    MON -->|"Detecta fraude e anomalias de acesso"| DATA
+package "IAM\nIdentity & Access" as IAM #E3F2FD
+package "NetSec\nNetwork Security" as NET #FFF3E0
+package "DataProt\nData Protection" as DATA #E8F5E9
+package "Secrets\nSecrets Management" as SEC #FCE4EC
+package "Audit\nAudit & Compliance" as AUD #EDE7F6
+package "Monitor\nMonitoring & Detection" as MON #FFF8E1
 
-    style IAM fill:#E3F2FD,stroke:#333
-    style NET fill:#FFF3E0,stroke:#333
-    style DATA fill:#E8F5E9,stroke:#333
-    style SEC fill:#FCE4EC,stroke:#333
-    style AUD fill:#EDE7F6,stroke:#333
-    style MON fill:#FFF8E1,stroke:#333
+IAM --> DATA : IAM define quem\nacessa chaves KMS
+NET --> IAM : Security Groups\nusam roles IAM
+DATA --> SEC : Chaves gerenciadas\nno Secrets Manager
+AUD --> IAM : CloudTrail registra\nações IAM
+MON --> AUD : CloudWatch consome\nlogs CloudTrail
+MON --> NET : GuardDuty analisa\nVPC Flow Logs
+MON --> DATA : Detecta fraude e\nanomalias de acesso
+@enduml
 ```
 
 | De | Para | Motivo |
