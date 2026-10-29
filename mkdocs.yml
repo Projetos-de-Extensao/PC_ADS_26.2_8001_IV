@@ -6,15 +6,22 @@ copyright: Copyright ©️ 2026, Jonh Carvalho
 
 nav: 
   - Home: index.md
-  - Iniciação: 
+  - Iniciação:
       - Index: Iniciacao/index.md
       - Documento de Visão: Iniciacao/documento_de_visao.md
+      - Requisitos Suplementares: Iniciacao/requisitos_suplementares.md
   - Elaboração:
       - Index: Elaboracao/index.md
+      - Casos de Uso Arquiteturais: Elaboracao/casos_de_uso_arquiteturais.md
+      - Modelo de Análise (Pacotes/Subsistemas): Elaboracao/modelo_de_analise.md
+      - Modelo de Análise (Dimensionamento BD): Elaboracao/dimensionamento_rds.md
+      - Modelo de Análise (Modelo de Computação): Elaboracao/dimensionamento_ec2.md
+      - Modelo de Design (Consolidação Arquitetural): Elaboracao/consolidacao_arquitetural.md
   - Construção:
       - Index: Construcao/index.md
   - Transição:
       - Index: Transicao/index.md
+      - Modelo de Design (Atividades - Deploy): Transicao/estrategias_deploy.md
 
 extra_css:
   - css/extra.css
