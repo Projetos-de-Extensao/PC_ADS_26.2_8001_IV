@@ -951,3 +951,105 @@ A **transferência de dados** responde por 64% do custo desta camada. Por isso, 
 | :--- | :--- | :--- | :--- |
 | 0.1 | 29/10/2026 | Grupo E-commerce | Criação do documento a partir do modelo SwiftTrack. |
 | 1.0 | 29/10/2026 | Grupo E-commerce | Premissas de carga, classes, diagramas, memória de cálculo e custos do e-commerce. |
+
+---
+
+## 14. Adendo AP2 — Dimensionamento da instância EC2 com Docker Compose
+
+### 14.1 Cargas por contêiner
+
+| Contêiner | Processo | vCPU (pico) | Memória (pico) | Observação |
+| :--- | :--- | :--- | :--- | :--- |
+| `web` | gunicorn, 2 workers sync | 0,5 – 1,0 | 300 – 450 MB | Django + DRF + WhiteNoise |
+| `db` | PostgreSQL 16 | 0,3 – 0,8 | 400 – 700 MB | `shared_buffers` padrão 128 MB; cresce com cache do SO |
+| SO + Docker | dockerd, containerd, sshd | 0,1 | 400 – 500 MB | Ubuntu 24.04 |
+
+Soma de pico estimada: **~1,2 – 1,7 GB de RAM**. Valores de contêiner são estimativas de projeto a
+confirmar com `docker stats` na EC2 (evidência a anexar na entrega).
+
+### 14.2 Escolha do tipo de instância
+
+| Critério | `t3.small` (2 vCPU, 2 GB) | `t3.medium` (2 vCPU, 4 GB) | `t3.large` (2 vCPU, 8 GB) |
+| :--- | :--- | :--- | :--- |
+| Cabe no pico de memória | Sim, com folga pequena (~300 MB) | **Sim, com folga de ~2,3 GB** | Sim, ociosa |
+| Cache do PostgreSQL | Limitado | **Suficiente para o volume de 12 meses** | Excessivo |
+| Custo mensal (estimativa 24x7) | ≈ US$ 15 | **≈ US$ 30** | ≈ US$ 61 |
+| Uso recomendado | Mínimo / demonstração | **Recomendado** | Não necessário |
+
+**Decisão:** `t3.medium` para a avaliação (a `t3.small` é aceitável se o orçamento do laboratório exigir;
+ative *swap* de 1 GB nesse caso). Instâncias `t3` usam créditos de CPU: com tráfego de demonstração o
+consumo fica abaixo da linha de base.
+
+### 14.3 Custo mensal estimado (região `us-east-1`, sob demanda)
+
+| Componente | Configuração | Custo mensal estimado |
+| :--- | :--- | :--- |
+| EC2 | `t3.medium`, 730 h | ≈ US$ 30,4 |
+| EBS | gp3 20 GB | ≈ US$ 1,6 |
+| IPv4 público / Elastic IP | 1 endereço | ≈ US$ 3,7 |
+| Transferência de saída | < 100 GB | ≈ US$ 0 (primeiros 100 GB/mês gratuitos) |
+| **Total** | | **≈ US$ 36 / mês** (≈ US$ 21 com `t3.small`) |
+
+> Valores calculados com preços públicos de tabela e **devem ser confirmados na AWS Pricing Calculator**
+> no dia do deploy; a instância pode ser **parada** fora do horário de avaliação para reduzir o custo
+> (o EBS e o Elastic IP continuam cobrados).
+
+### 14.4 Rede e Security Group
+
+```plantuml
+@startuml
+title Implantação AP2 - EC2 + Docker Compose
+skinparam shadowing false
+skinparam defaultTextAlignment center
+
+actor "Cliente / App do\nentregador" as U
+cloud "AWS (us-east-1)" {
+  node "Security Group\nSSH 22 (IP do grupo)\nHTTP 8000 (IP do grupo e avaliador)\n5432 FECHADA" as SG {
+    node "EC2 t3.medium\nUbuntu 24.04 + Docker" as EC2 {
+      component "web\nDjango + DRF + gunicorn" as WEB
+      database "db\nPostgreSQL 16" as DB
+      storage "volume pgdata" as VOL
+    }
+  }
+}
+U --> WEB : HTTP :8000
+WEB --> DB : rede interna do Compose\n(5432 não publicada)
+DB --> VOL : /var/lib/postgresql/data
+@enduml
+```
+
+| Regra de entrada | Porta | Origem | Motivo |
+| :--- | :--- | :--- | :--- |
+| SSH | 22 | IP do grupo | Administração e deploy |
+| HTTP personalizado | 8000 | IP do grupo e do avaliador (ou `0.0.0.0/0` só durante a avaliação) | API e Admin |
+| PostgreSQL | 5432 | **Nenhuma** | Banco acessível apenas pela rede interna do Compose |
+
+### 14.5 Configuração efetivamente implantada
+
+| Item | Valor |
+| :--- | :--- |
+| Região | us-east-2 (Ohio) |
+| Tipo | `c7i-flex.large` (2 vCPU, 4 GB) — mesma memória do `t3.medium` dimensionado; escolhido por ser elegível ao plano gratuito da conta, que não aceita `t3.medium` |
+| Disco | gp3 20 GB criptografado |
+| Elastic IP | 77.112.118.58 |
+| Security Group | `lastmile-ap2-sg`: 22 (IP do grupo) e 8000; 5432 fechada |
+| Criação | `src/scripts/aws/criar_infra.sh` |
+
+### 14.6 Consumo medido na instância (08/11/2026, API em operação, carga de demonstração)
+
+Medido na EC2 `c7i-flex.large` com `docker stats --no-stream`, `free -h` e `df -h /`, depois do seed e de alguns pedidos de teste.
+
+| Recurso | Medido | Estimativa de §14.1 | Leitura |
+| :--- | :--- | :--- | :--- |
+| Contêiner `web` (memória) | 103,4 MiB (2,71%) | 300 – 450 MB | Abaixo do previsto em repouso; sobe com mais requisições e workers |
+| Contêiner `db` (memória) | 22,3 MiB (0,58%) | 400 – 700 MB | Banco pequeno e quase sem cache; cresce com o volume (ver `dimrbd.md` §13.3) |
+| CPU `web` / `db` | 0,01% / 3,04% | 0,5–1 vCPU / 0,3–0,8 vCPU | Ocioso; as estimativas valem para pico |
+| Memória total do host | 751 MiB usados de 3,7 GiB; 3,0 GiB disponíveis | 1,2 – 1,7 GB | Folga de ~80% |
+| Swap | 2,0 GiB, 0 B em uso | — | Criado pelo `user-data` como proteção |
+| Disco raiz | 5,7 GB usados de 19 GB (31%) | 20 GB | Sistema, Docker e imagens; 13 GB livres |
+
+**Conclusão:** os valores medidos são de **repouso** e confirmam que 4 GB de RAM sobram para a
+solução; o dimensionamento de pico (§14.1) segue como referência para carga real e deve ser
+validado com um teste de carga, que não foi feito na AP2. O volume de 20 GB comporta os ~5,6 GB projetados para 12 meses
+mais o sistema e as imagens.
+
