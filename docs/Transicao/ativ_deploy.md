@@ -632,6 +632,7 @@ Base: 20 deploys por mês, ASG com 2 instâncias (fora de pico), preços de refe
 | :--- | :--- | :--- | :--- |
 | 0.1 | 29/10/2026 | Grupo E-commerce | Criação do documento a partir do modelo SwiftTrack. |
 | 1.0 | 29/10/2026 | Grupo E-commerce | Comparação das estratégias, diagramas de atividades, tabela de atividades e estimativas. |
+| 1.1 | 16/11/2026 | Ricardo França | Custo da AP2 recalculado para a instância implantada (`c7i-flex.large`, us-east-2). |
 
 ---
 
@@ -693,7 +694,7 @@ stop
 | 5 | Migrations, `collectstatic`, superusuário e seed | Automático (entrypoint) | 20–40 s | 5–15 s | — |
 | 6 | Verificar `/health/`, `/api/produtos/` e `/admin/` | Qualidade | 3 min | 1 min | — |
 | 7 | Coletar evidências (prints) | Documentação | 15 min | — | — |
-| | **Total** | | **≈ 50–55 min** | **≈ 3–6 min** | **≈ US$ 36/mês de infraestrutura** |
+| | **Total** | | **≈ 50–55 min** | **≈ 3–6 min** | **≈ US$ 67/mês de infraestrutura** (`c7i-flex.large` em us-east-2) |
 
 Os tempos são estimativas de planejamento; os valores medidos no deploy real devem ser anotados
 nas evidências do README.

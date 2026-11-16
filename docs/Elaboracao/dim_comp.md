@@ -951,6 +951,7 @@ A **transferência de dados** responde por 64% do custo desta camada. Por isso, 
 | :--- | :--- | :--- | :--- |
 | 0.1 | 29/10/2026 | Grupo E-commerce | Criação do documento a partir do modelo SwiftTrack. |
 | 1.0 | 29/10/2026 | Grupo E-commerce | Premissas de carga, classes, diagramas, memória de cálculo e custos do e-commerce. |
+| 1.1 | 16/11/2026 | Ricardo França | Custo da AP2 recalculado para a instância implantada (`c7i-flex.large`, us-east-2). |
 
 ---
 
@@ -980,15 +981,21 @@ confirmar com `docker stats` na EC2 (evidência a anexar na entrega).
 ative *swap* de 1 GB nesse caso). Instâncias `t3` usam créditos de CPU: com tráfego de demonstração o
 consumo fica abaixo da linha de base.
 
-### 14.3 Custo mensal estimado (região `us-east-1`, sob demanda)
+### 14.3 Custo mensal estimado (região `us-east-2`, sob demanda, 730 h)
 
-| Componente | Configuração | Custo mensal estimado |
-| :--- | :--- | :--- |
-| EC2 | `t3.medium`, 730 h | ≈ US$ 30,4 |
-| EBS | gp3 20 GB | ≈ US$ 1,6 |
-| IPv4 público / Elastic IP | 1 endereço | ≈ US$ 3,7 |
-| Transferência de saída | < 100 GB | ≈ US$ 0 (primeiros 100 GB/mês gratuitos) |
-| **Total** | | **≈ US$ 36 / mês** (≈ US$ 21 com `t3.small`) |
+A tabela traz o custo da instância **efetivamente implantada** (`c7i-flex.large`, ver §14.5) e, para
+comparação, o da `t3.medium` dimensionada em §14.2.
+
+| Componente | Configuração | Implantado: `c7i-flex.large` | Dimensionado: `t3.medium` |
+| :--- | :--- | ---: | ---: |
+| EC2 | 2 vCPU, 4 GB, 730 h | ≈ US$ 61,9 | ≈ US$ 30,4 |
+| EBS | gp3 20 GB | ≈ US$ 1,6 | ≈ US$ 1,6 |
+| IPv4 público / Elastic IP | 1 endereço | ≈ US$ 3,7 | ≈ US$ 3,7 |
+| Transferência de saída | < 100 GB | ≈ US$ 0 | ≈ US$ 0 |
+| **Total** | | **≈ US$ 67 / mês** | ≈ US$ 36 / mês |
+
+A `c7i-flex.large` custa cerca do dobro da `t3.medium`, mas é a opção com 4 GB que o plano gratuito da
+conta permite; o custo dela é coberto pelos créditos desse plano.
 
 > Valores calculados com preços públicos de tabela e **devem ser confirmados na AWS Pricing Calculator**
 > no dia do deploy; a instância pode ser **parada** fora do horário de avaliação para reduzir o custo
@@ -1003,9 +1010,9 @@ skinparam shadowing false
 skinparam defaultTextAlignment center
 
 actor "Cliente / App do\nentregador" as U
-cloud "AWS (us-east-1)" {
-  node "Security Group\nSSH 22 (IP do grupo)\nHTTP 8000 (IP do grupo e avaliador)\n5432 FECHADA" as SG {
-    node "EC2 t3.medium\nUbuntu 24.04 + Docker" as EC2 {
+cloud "AWS (us-east-2)" {
+  node "Security Group\nSSH 22 (IP do grupo)\nHTTP 8000 (aberta)\n5432 FECHADA" as SG {
+    node "EC2 c7i-flex.large\nUbuntu 24.04 + Docker" as EC2 {
       component "web\nDjango + DRF + gunicorn" as WEB
       database "db\nPostgreSQL 16" as DB
       storage "volume pgdata" as VOL
